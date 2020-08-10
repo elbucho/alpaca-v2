@@ -119,6 +119,69 @@ class Endpoint
     }
 
     /**
+     * Return formatted data from a given array, key, and ruleset
+     *
+     * @access  protected
+     * @param   array   $data
+     * @param   string  $key
+     * @param   array   $rules
+     * @return  mixed
+     * @throws  InvalidResponseException
+     */
+    protected function getFormattedData(array $data, string $key, array $rules)
+    {
+        if ( ! array_key_exists('type', $rules)) {
+            throw new InvalidResponseException(sprintf(
+                'No rule specified for the key %s',
+                $key
+            ));
+        }
+
+        if ( ! array_key_exists('required', $rules) or $rules['required'] == false) {
+            $required = false;
+        } else {
+            $required = true;
+        }
+
+        if ($required and ! array_key_exists($key, $data)) {
+            throw new InvalidResponseException(sprintf(
+                'Key %s is required for this data, but is missing',
+                $key
+            ));
+        }
+
+        $return = [];
+
+        try {
+            switch($rules['type']) {
+                case 'datetime':
+                    $return[$key] = (empty($data[$key]) ? null :
+                        $this->convertToDateTime($data[$key]));
+                    break;
+                case 'int':
+                    $return[$key] = (int) $data[$key];
+                    break;
+                case 'float':
+                    $return[$key] = (float) $data[$key];
+                    break;
+                case 'bool':
+                    $return[$key] = (strtolower($data[$key]) == 'true');
+                    break;
+                case 'array':
+                    $return[$key] = (is_array($data[$key]) ? $data[$key] : [$data[$key]]);
+                    break;
+                case 'string':
+                default:
+                    $return[$key] = $data[$key];
+            }
+        } catch (\Exception $e) {
+            throw new InvalidResponseException($e->getMessage());
+        }
+
+        return $return;
+    }
+
+    /**
      * Build the URL from the given path and the provided endpoint
      *
      * @access  private

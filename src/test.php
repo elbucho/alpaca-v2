@@ -4,6 +4,7 @@ require_once('../vendor/autoload.php');
 use Elbucho\AlpacaV2\Calendar;
 use Elbucho\AlpacaV2\Clock;
 use Elbucho\AlpacaV2\Account;
+use Elbucho\AlpacaV2\Orders;
 
 $key      = 'PKPDSXCMHXH6CP77IHAB';
 $secret   = 'ir44mrezkLkKr9wuhVVmOOT3D2PePOg9e/4/Y85D';
@@ -18,8 +19,12 @@ var_dump($calendar->getMarketDays($start, $end));
 
 $clock = new Clock($key, $secret, $endpoint);
 
-var_dump($clock->getClock()); */
+var_dump($clock->getClock());
 
 $account = new Account($key, $secret, $endpoint);
 
-var_dump($account->getValue());die;
+var_dump($account->getValue());die; */
+
+$orders = new Orders($key, $secret, $endpoint);
+
+var_dump($orders->getOrders());

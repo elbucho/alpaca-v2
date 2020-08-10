@@ -43,47 +43,10 @@ final class Clock extends Endpoint
         }
 
         return [
-            'timestamp'  => new \DateTimeImmutable($this->format($results['timestamp'])),
+            'timestamp'  => $this->convertToDateTime($results['timestamp']),
             'is_open'    => $results['is_open'],
-            'next_open'  => new \DateTimeImmutable($this->format($results['next_open'])),
-            'next_close' => new \DateTimeImmutable($this->format($results['next_close']))
+            'next_open'  => $this->convertToDateTime($results['next_open']),
+            'next_close' => $this->convertToDateTime($results['next_close'])
         ];
-    }
-
-    /**
-     * Alter the format of the provided timestamp to one acceptable to \DateTimeImmutable
-     *
-     * @access  private
-     * @param   string  $timestamp
-     * @return  string
-     * @throws  InvalidResponseException
-     */
-    private function format(string $timestamp): string
-    {
-        $pattern = "/^(?<year>\d{4})\-(?<month>\d{2})\-(?<day>\d{2})T(?<hour>\d{2})\:" .
-            "(?<minute>\d{2})\:(?<second>\d{2})(\.\d*)?(?<offset>\-\d{2}\:\d{2})?/";
-        preg_match($pattern, $timestamp, $match);
-
-        foreach (['year','month','day','hour','minute','second'] as $required) {
-            if ( ! array_key_exists($required, $match)) {
-                throw new InvalidResponseException(sprintf(
-                    'Timestamp does not conform to required format: %s',
-                    $timestamp
-                ));
-            }
-        }
-
-        $offset = (isset($match['offset']) ? $match['offset'] : '-00:00');
-
-        return sprintf(
-            '%s-%s-%sT%s:%s:%s%s',
-            $match['year'],
-            $match['month'],
-            $match['day'],
-            $match['hour'],
-            $match['minute'],
-            $match['second'],
-            $offset
-        );
     }
 }

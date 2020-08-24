@@ -31,7 +31,7 @@ final class Orders extends Endpoint
      * @param   \DateTimeImmutable|null $to
      * @param   string                  $status
      * @param   int                     $limit
-     * @return  array
+     * @return  OrderCollection
      * @throws  InvalidResponseException
      * @throws  InvalidParameterException
      */
@@ -40,7 +40,7 @@ final class Orders extends Endpoint
         \DateTimeImmutable $to = null,
         string $status = self::STATUS_ALL,
         int $limit = 50
-    ): array {
+    ): OrderCollection {
         if (is_null($from)) {
             $from = new \DateTimeImmutable('7 days ago');
         }
@@ -77,7 +77,13 @@ final class Orders extends Endpoint
             throw new InvalidResponseException($e->getMessage());
         }
 
-        return $this->formatOrders($results);
+        $return = new OrderCollection();
+
+        foreach ($results as $order) {
+            $return->add(new Order($order));
+        }
+
+        return $return;
     }
 
     /**
@@ -85,10 +91,10 @@ final class Orders extends Endpoint
      *
      * @access  public
      * @param   string  $id
-     * @return  array
+     * @return  Order|null
      * @throws  InvalidResponseException
      */
-    public function getOrder(string $id): array
+    public function getOrder(string $id): ?Order
     {
         try {
             $results = $this->get(
@@ -99,13 +105,174 @@ final class Orders extends Endpoint
             throw new InvalidResponseException($e->getMessage());
         }
 
-        return $this->formatOrder($results);
+        if (empty($results)) {
+            return null;
+        }
+
+        return new Order($results);
     }
 
+    /**
+     * Get an order from a provided Client Order ID
+     *
+     * @access  public
+     * @param   string  $clientOrderId
+     * @return  Order|null
+     * @throws  InvalidResponseException
+     */
+    public function getOrderByClientId(string $clientOrderId): ?Order
+    {
+        try {
+            $results = $this->get(
+                sprintf('%s:by_client_order_id', $this->path),
+                ['client_order_id' => $clientOrderId]
+            );
+        } catch (GuzzleException $e) {
+            throw new InvalidResponseException($e->getMessage());
+        }
+
+        if (empty($results)) {
+            return null;
+        }
+
+        return new Order($results);
+    }
+
+    /**
+     * Place a new order
+     *
+     * @access  public
+     * @param   Order   $order
+     * @return  bool
+     */
+    public function placeOrder(Order $order): bool
+    {
+        try {
+            $results = $this->post($this->path, $this->prepareOrderForPost($order));
+        } catch (GuzzleException $e) {
+            return false;
+        }
+
+        if ( ! empty($results)) {
+            $order->update($results);
+        }
+
+        return true;
+    }
+
+    /**
+     * Update an order, return a new updated Order object
+     *
+     * @access  public
+     * @param   Order   $order
+     * @return  Order|null
+     */
+    public function updateOrder(Order $order): ?Order
+    {
+        $key = $order->{'Id'};
+
+        if (empty($key)) {
+            return null;
+        }
+
+        try {
+            $results = $this->patch(
+                sprintf('%s/%s', $this->path, $key),
+                $this->prepareOrderForPatch($order)
+            );
+        } catch (GuzzleException $e) {
+            return null;
+        }
+
+        if (empty($results)) {
+            return null;
+        }
+
+        return new Order($results);
+    }
+
+    /**
+     * Cancel Order
+     *
+     * @access  public
+     * @param   Order   $order
+     * @return  bool
+     */
+    public function cancelOrder(Order $order): bool
+    {
+        $key = $order->{'Id'};
+
+        if (empty($key)) {
+            return false;
+        }
+
+        try {
+            $this->delete(
+                sprintf('%s/%s', $this->path, $key),
+                $status
+            );
+        } catch (GuzzleException $e) {
+            return false;
+        }
+
+        return $status;
+    }
+
+    /**
+     * Prepare an order object for a POST request
+     *
+     * @access  private
+     * @param   Order   $order
+     * @return  array
+     */
+    private function prepareOrderForPost(Order $order): array
+    {
+        $return = [
+            'symbol'            => $order->{'Symbol'},
+            'qty'               => (string) $order->{'Quantity'},
+            'side'              => $order->{'Side'},
+            'type'              => $order->{'Type'},
+            'time_in_force'     => $order->{'TimeInForce'},
+            'limit_price'       => (string) $order->{'LimitPrice'},
+            'stop_price'        => (string) $order->{'StopPrice'},
+            'extended_hours'    => ($order->{'ExtendedHours'} ? 'true' : 'false'),
+            'client_order_id'   => $order->{'ClientOrderId'},
+            'order_class'       => $order->{'Class'},
+            'take_profit'       => $order->{'TakeProfit'},
+            'stop_loss'         => $order->{'StopLoss'}
+        ];
+
+        return array_filter($return, function ($value) {
+            return ! is_null($value);
+        });
+    }
+
+    /**
+     * Prepare an order object for a POST request
+     *
+     * @access  private
+     * @param   Order   $order
+     * @return  array
+     */
+    private function prepareOrderForPatch(Order $order): array
+    {
+        $return = [
+            'qty'               => (string) $order->{'Quantity'},
+            'time_in_force'     => $order->{'TimeInForce'},
+            'limit_price'       => (string) $order->{'LimitPrice'},
+            'stop_price'        => (string) $order->{'StopPrice'},
+            'client_order_id'   => $order->{'ClientOrderId'}
+        ];
+
+        return array_filter($return, function ($value) {
+            return ! is_null($value);
+        });
+    }
 
     /**
      * Format a provided array of order objects
      *
+     * @deprecated
      * @access  private
      * @param   array   $data
      * @return  array
@@ -126,6 +293,7 @@ final class Orders extends Endpoint
     /**
      * Format a provided order array
      *
+     * @deprecated
      * @access  private
      * @param   array   $order
      * @return  array

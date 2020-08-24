@@ -80,47 +80,90 @@ class Endpoint
     }
 
     /**
-     * Translate a date string into a \DateTimeImmutable object
+     * Send a POST request to the given path with the provided data,
+     * and return an array of data
      *
      * @access  protected
-     * @param   string  $datetime
-     * @return  \DateTimeImmutable
-     * @throws  \Exception
+     * @param   string  $path
+     * @param   array   $data
+     * @return  array
+     * @throws  GuzzleException
      */
-    protected function convertToDateTime(string $datetime): \DateTimeImmutable
+    protected function post(string $path, array $data = []): array
     {
-        $pattern = "/^(?<year>\d{4})\-(?<month>\d{2})\-(?<day>\d{2})T(?<hour>\d{2})\:" .
-            "(?<minute>\d{2})\:(?<second>\d{2})(\.\d*)?(?<offset>\-\d{2}\:\d{2})?/";
-        preg_match($pattern, $datetime, $match);
-
-        foreach (['year','month','day','hour','minute','second'] as $required) {
-            if ( ! array_key_exists($required, $match)) {
-                throw new \Exception(sprintf(
-                    'Provided timestamp does not conform to required format: %s',
-                    $datetime
-                ));
-            }
-        }
-
-        $offset = (isset($match['offset']) ? $match['offset'] : '-00:00');
-
-        $formattedTime = sprintf(
-            '%s-%s-%sT%s:%s:%s%s',
-            $match['year'],
-            $match['month'],
-            $match['day'],
-            $match['hour'],
-            $match['minute'],
-            $match['second'],
-            $offset
+        $client = new Client();
+        $response = $client->request(
+            'POST',
+            $this->buildUrl($path),
+            [
+                'headers'   => $this->getHeaders(),
+                'body'      => $data
+            ]
         );
 
-        return new \DateTimeImmutable($formattedTime);
+        $return = json_decode($response->getBody(), true);
+
+        return (is_array($return) ? $return : [$return]);
+    }
+
+    /**
+     * Send a PATCH request to the given path with the provided data,
+     * and return an array of data
+     *
+     * @access  protected
+     * @param   string  $path
+     * @param   array   $data
+     * @return  array
+     * @throws  GuzzleException
+     */
+    protected function patch(string $path, array $data = []): array
+    {
+        $client = new Client();
+        $response = $client->request(
+            'PATCH',
+            $this->buildUrl($path),
+            [
+                'headers'   => $this->getHeaders(),
+                'body'      => $data
+            ]
+        );
+
+        $return = json_decode($response->getBody(), true);
+
+        return (is_array($return) ? $return : [$return]);
+    }
+
+    /**
+     * Send a DELETE request to the given path and return an array of data
+     *
+     * @access  protected
+     * @param   string  $path
+     * @param   bool    $status
+     * @return  array
+     * @throws  GuzzleException
+     */
+    protected function delete(string $path, bool &$status): array
+    {
+        $client = new Client();
+        $response = $client->request(
+            'DELETE',
+            $this->buildUrl($path),
+            [
+                'headers'   => $this->getHeaders()
+            ]
+        );
+
+        $return = json_decode($response->getBody(), true);
+        $statusCode = $response->getStatusCode();
+        $status = ($statusCode == 200);
+
+        return (is_array($return) ? $return : [$return]);
     }
 
     /**
      * Return formatted data from a given array, key, and ruleset
      *
+     * @deprecated
      * @access  protected
      * @param   array   $data
      * @param   string  $key
@@ -156,7 +199,7 @@ class Endpoint
             switch($rules['type']) {
                 case 'datetime':
                     $return[$key] = (empty($data[$key]) ? null :
-                        $this->convertToDateTime($data[$key]));
+                        Helper::convertToDateTime($data[$key]));
                     break;
                 case 'int':
                     $return[$key] = (int) $data[$key];

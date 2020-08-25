@@ -1,7 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
-use Elbucho\AlpacaV2\API\Endpoint;
+namespace Elbucho\AlpacaV2\API;
 use Elbucho\AlpacaV2\Exceptions\InvalidResponseException;
 use GuzzleHttp\Exception\GuzzleException;
 
@@ -184,7 +183,7 @@ final class Account extends Endpoint
                     $return[$key] = (strtolower($account[$key]) == 'true');
                     break;
                 case 'datetime':
-                    $return[$key] = $this->convertToDateTime($account[$key]);
+                    $return[$key] = Helper::convertToDateTime($account[$key]);
                     break;
                 case 'string':
                 default:

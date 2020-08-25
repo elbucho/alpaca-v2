@@ -1,14 +1,15 @@
 <?php
 
 require_once('../vendor/autoload.php');
-use Elbucho\AlpacaV2\Calendar;
-use Elbucho\AlpacaV2\Clock;
-use Elbucho\AlpacaV2\Account;
-use Elbucho\AlpacaV2\Orders;
+
+use Elbucho\AlpacaV2\Client;
+use Elbucho\AlpacaV2\API\Order;
 
 $key      = 'PKPDSXCMHXH6CP77IHAB';
 $secret   = 'ir44mrezkLkKr9wuhVVmOOT3D2PePOg9e/4/Y85D';
 $endpoint = 'https://paper-api.alpaca.markets';
+
+$client = new Client($key, $secret, $endpoint);
 
 /*$calendar = new Calendar($key, $secret, $endpoint);
 
@@ -25,6 +26,11 @@ $account = new Account($key, $secret, $endpoint);
 
 var_dump($account->getValue());die; */
 
-$orders = new Orders($key, $secret, $endpoint);
+$order = new Order();
+$order->{'Symbol'} = 'CBL';
+$order->{'Side'} = Order::SIDE_BUY;
+$order->{'Quantity'} = 1;
+$order->{'Type'} = Order::TYPE_MARKET;
+$order->{'TimeInForce'} = Order::TIF_DAY;
 
-var_dump($orders->getOrders());
+var_dump($client->orders()->placeOrder($order), $order);

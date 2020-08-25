@@ -4,6 +4,7 @@ namespace Elbucho\AlpacaV2\API;
 use Elbucho\AlpacaV2\Exceptions\InvalidResponseException;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\RequestOptions;
 
 class Endpoint
 {
@@ -92,12 +93,20 @@ class Endpoint
     protected function post(string $path, array $data = []): array
     {
         $client = new Client();
+/*        $client->post(
+            $this->buildUrl($path),
+            [
+                \GuzzleHttp\RequestOptions::HEADERS => $this->getHeaders(),
+                \GuzzleHttp\RequestOptions::JSON    => json_encode($data)
+            ]
+        ); */
+
         $response = $client->request(
             'POST',
             $this->buildUrl($path),
             [
                 'headers'   => $this->getHeaders(),
-                'body'      => $data
+                'json'      => $data
             ]
         );
 
@@ -259,7 +268,8 @@ class Endpoint
     {
         return [
             'APCA-API-KEY-ID'       => $this->key,
-            'APCA-API-SECRET-KEY'   => $this->secret
+            'APCA-API-SECRET-KEY'   => $this->secret,
+            'Accept'                => 'application/json'
         ];
     }
 }

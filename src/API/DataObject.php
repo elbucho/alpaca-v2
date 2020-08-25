@@ -1,6 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
+namespace Elbucho\AlpacaV2\API;
 
 abstract class DataObject
 {
@@ -64,7 +64,7 @@ abstract class DataObject
         }
 
         if ( ! isset($this->data[$key]) or $this->data[$key] !== $value) {
-            $this->changes[$key] = $this->data[$key];
+            $this->changes[$key] = (isset($this->data[$key]) ? $this->data[$key] : null);
         }
 
         $this->data[$key] = $value;

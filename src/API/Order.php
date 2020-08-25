@@ -1,6 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
+namespace Elbucho\AlpacaV2\API;
 
 final class Order extends DataObject
 {

@@ -1,7 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
-use Elbucho\AlpacaV2\API\Endpoint;
+namespace Elbucho\AlpacaV2\API;
 use Elbucho\AlpacaV2\Exceptions\InvalidParameterException;
 use Elbucho\AlpacaV2\Exceptions\InvalidResponseException;
 use GuzzleHttp\Exception\GuzzleException;
@@ -144,14 +143,11 @@ final class Orders extends Endpoint
      * @access  public
      * @param   Order   $order
      * @return  bool
+     * @throws  GuzzleException
      */
     public function placeOrder(Order $order): bool
     {
-        try {
-            $results = $this->post($this->path, $this->prepareOrderForPost($order));
-        } catch (GuzzleException $e) {
-            return false;
-        }
+        $results = $this->post($this->path, $this->prepareOrderForPost($order));
 
         if ( ! empty($results)) {
             $order->update($results);
@@ -227,22 +223,29 @@ final class Orders extends Endpoint
      */
     private function prepareOrderForPost(Order $order): array
     {
+        $class = $order->{'Class'};
+        $extendedHours = $order->{'ExtendedHours'};
+
         $return = [
             'symbol'            => $order->{'Symbol'},
-            'qty'               => (string) $order->{'Quantity'},
+            'qty'               => $order->{'Quantity'},
             'side'              => $order->{'Side'},
             'type'              => $order->{'Type'},
             'time_in_force'     => $order->{'TimeInForce'},
-            'limit_price'       => (string) $order->{'LimitPrice'},
-            'stop_price'        => (string) $order->{'StopPrice'},
-            'extended_hours'    => ($order->{'ExtendedHours'} ? 'true' : 'false'),
+            'limit_price'       => $order->{'LimitPrice'},
+            'stop_price'        => $order->{'StopPrice'},
+            'extended_hours'    => (is_null($extendedHours) ? false : $extendedHours),
             'client_order_id'   => $order->{'ClientOrderId'},
-            'order_class'       => $order->{'Class'},
+            'order_class'       => (is_null($class) ? Order::CLASS_SIMPLE : $class),
             'take_profit'       => $order->{'TakeProfit'},
             'stop_loss'         => $order->{'StopLoss'}
         ];
 
         return array_filter($return, function ($value) {
+            if (is_string($value)) {
+                return ! empty($value);
+            }
+
             return ! is_null($value);
         });
     }
@@ -257,10 +260,10 @@ final class Orders extends Endpoint
     private function prepareOrderForPatch(Order $order): array
     {
         $return = [
-            'qty'               => (string) $order->{'Quantity'},
+            'qty'               => $order->{'Quantity'},
             'time_in_force'     => $order->{'TimeInForce'},
-            'limit_price'       => (string) $order->{'LimitPrice'},
-            'stop_price'        => (string) $order->{'StopPrice'},
+            'limit_price'       => $order->{'LimitPrice'},
+            'stop_price'        => $order->{'StopPrice'},
             'client_order_id'   => $order->{'ClientOrderId'}
         ];
 

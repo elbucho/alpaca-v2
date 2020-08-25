@@ -1,7 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
-use Elbucho\AlpacaV2\API\Endpoint;
+namespace Elbucho\AlpacaV2\API;
 use GuzzleHttp\Exception\GuzzleException;
 use Elbucho\AlpacaV2\Exceptions\InvalidResponseException;
 
@@ -43,10 +42,10 @@ final class Clock extends Endpoint
         }
 
         return [
-            'timestamp'  => $this->convertToDateTime($results['timestamp']),
+            'timestamp'  => Helper::convertToDateTime($results['timestamp']),
             'is_open'    => $results['is_open'],
-            'next_open'  => $this->convertToDateTime($results['next_open']),
-            'next_close' => $this->convertToDateTime($results['next_close'])
+            'next_open'  => Helper::convertToDateTime($results['next_open']),
+            'next_close' => Helper::convertToDateTime($results['next_close'])
         ];
     }
 }

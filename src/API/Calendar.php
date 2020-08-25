@@ -1,7 +1,6 @@
 <?php
 
-namespace Elbucho\AlpacaV2;
-use Elbucho\AlpacaV2\API\Endpoint;
+namespace Elbucho\AlpacaV2\API;
 use GuzzleHttp\Exception\GuzzleException;
 
 final class Calendar extends Endpoint
@@ -30,8 +29,8 @@ final class Calendar extends Endpoint
      * ]
      *
      * @access  public
-     * @param   \DateTimeImmutable  $startDate
-     * @param   \DateTimeImmutable  $endDate
+     * @param   \DateTimeImmutable|null $startDate
+     * @param   \DateTimeImmutable|null $endDate
      * @return  array
      * @throws  GuzzleException
      */
